@@ -17,4 +17,6 @@ async def on_ready():
 
 
 if __name__ == '__main__':
+    from WiezenBot import WiezenBot
     bot.run(TOKEN)
+    bot.add_cog(WiezenBot(bot))
