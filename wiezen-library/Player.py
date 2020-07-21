@@ -5,12 +5,13 @@ PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
 
 class Player:
-    def __init__(self, discord_member):
+    def __init__(self, discord_member, is_dealer: bool):
         self.hand: List[Card] = []
         self.discord_member = discord_member
         self.partner: Player or None = None
         self.round_wins: int = 0
         self.strategy: str or None = None
+        self.is_dealer: bool = is_dealer
 
     def give_card(self, card: Card):
         self.hand.append(card)
