@@ -1,3 +1,5 @@
+import copy
+
 from Deck import Deck
 from typing import List
 from Player import Player
@@ -44,17 +46,34 @@ class Game:
 
     async def handle_question(self,player,action):
         if(self.answered!=None):
-            if(action=="nee"):
-                self.answered+=1
-                if(self.answered==3):
+            # FIXME: zet dit terug aan voor int echt, als dat nu aan gaat kan ik niet meer met mezelf spelen
+            # if(list.index(self.players,player)<=self.turn+len(self.answered())):
+            #     await player.discord_member.send("elaba gij moogt niet meer antwoorden")
+            #     return
+            if(action=="nee" ):
+                self.answered.append(player)
+                if(len(self.answered)==3-self.turn):
                     self.turn+=1
+                    # FIXME hier moet iets om naar volgende beurt te gaan
+                else:
+                    await self.players[self.turn + len(self.answered) + 1].discord_member.send(
+                        "den %s vraagt, wilt ge mee? ja/nee" %
+                        self.players[self.turn].discord_member.name)
+
+            elif(action=="ja"):
+
+                leftover=copy.copy(self.players)
+                temp=list.index(self.players,player)
+                leftover.pop(temp)
+                leftover.pop(self.turn)
+                await self.send_to(self.players,"%s heeft een coalitie gemaakt met %s, dus nu moeten %s en %s maar samen"%
+                                   (self.players[self.turn].discord_member.name,player.discord_member.name,leftover[0].discord_member.name,leftover[1].discord_member.name))
+                #FIXME hier met iets staan om mensen te koppelen en verder te gaan
         else:
             if(action=="Vraag"):
-                self.answered=0
-                for i in range(len(self.players)):
-                    if(i!=self.turn):
-                        await self.players[i].discord_member.send("den %s vraagt, wilt ge mee? ja/nee"%
-                                                              self.players[self.turn].discord_member.name)
+                self.answered=list()
+                await self.players[self.turn+len(self.answered)+1].discord_member.send("den %s vraagt, wilt ge mee? ja/nee"%
+                                                      self.players[self.turn].discord_member.name)
 
 
 
@@ -68,7 +87,7 @@ class Game:
             if(player.must_start):
                 self.turn=0
                 newlist=self.players[idx:]
-                newlist.append(self.players[:idx])
+                newlist+=self.players[:idx]
                 self.players=newlist
                 break
         await self.players[self.turn].discord_member.send("wat wilde doen met uw kaarten: %s"%START_OPTIONS)
@@ -91,13 +110,13 @@ class Game:
         while(len(self.card_deck.cards)!=0):
             for player in self.players:
                 player.give_card(self.card_deck.get_card())
-        print("?")
 
     async def show_cards(self):
         for player in self.players:
             await player.discord_member.send(player.show_cards())
 
-
-
+    async def send_to(self,players,message):
+        for player in players:
+            await player.discord_member.send(message)
 
 
