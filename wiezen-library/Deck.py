@@ -9,7 +9,7 @@ class Deck:
 
     def shuffle(self, times=1):
         for i in range(0, times):
-            self.cards = random.shuffle(self.cards)
+            random.shuffle(self.cards)
 
     def get_card(self):
         return self.cards.pop()

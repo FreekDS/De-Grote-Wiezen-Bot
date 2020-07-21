@@ -20,14 +20,24 @@ class Game:
         self.card_deck = Deck()
         self.players: List[Player] = []
         self.table: List[Card] = []
+        self.state=None
 
     def add_player(self, discord_member, dealer=False):
         dealer = dealer and not self.dealer # make sure to only have one dealer
         new_player = Player(discord_member, dealer)
         self.players.append(new_player)
 
-    def perform_action(self, player, action):
-        pass
+    async def perform_action(self, player, action):
+        if(self.state==GameState.DEALING):
+            if(player.is_dealer):
+                self.card_deck.shuffle(int(action))
+                await player.discord_member.send("ge hebt %s keer geshoumeld"%action)
+            else:
+                await player.discord_member.send("mateke wacht eens op den dealer")
+
+    async def start_game(self):
+        self.state = GameState.DEALING
+        await self.dealer.ask_shuffles()
 
     @property
     def dealer(self):
@@ -35,3 +45,10 @@ class Game:
             if player.is_dealer:
                 return player
         return None
+
+    def get_wiezen_speler(self,discord):
+        for player in self.players:
+            if(player.discord_member==discord):
+                return player
+        return None
+

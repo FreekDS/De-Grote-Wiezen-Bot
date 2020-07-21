@@ -22,6 +22,10 @@ class Player:
     def show_cards(self):
         pass
 
+    async def ask_shuffles(self):
+        await self.discord_member.send("gij zijt den dealer")
+        await self.discord_member.send("hoeveel keer wilde shufflen?")
+
     @staticmethod
     def get_strats():
         return PLAYER_STRATS
