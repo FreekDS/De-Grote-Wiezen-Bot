@@ -1,4 +1,4 @@
-from Card import Card
+from wiezenlibrary.Card import Card
 import random
 
 

@@ -1,9 +1,9 @@
 import copy
 
-from Deck import Deck
+from wiezenlibrary.Deck import Deck
 from typing import List
-from Player import Player
-from Card import Card
+from wiezenlibrary.Player import Player
+from wiezenlibrary.Card import Card
 import enum
 
 

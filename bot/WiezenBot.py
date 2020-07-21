@@ -1,5 +1,5 @@
 import discord
-from Game import Game
+from wiezenlibrary.Game import Game
 from discord.ext import commands
 
 

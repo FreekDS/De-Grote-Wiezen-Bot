@@ -1,7 +1,7 @@
 from PIL import Image, ImageFont, ImageDraw
 from typing import Dict
-from Card import Card, CardType
-from Player import Player
+from wiezenlibrary.Card import Card, CardType
+from wiezenlibrary.Player import Player
 import os
 
 """ CARDS NAMING SCHEME: cardType_#.png """
@@ -71,7 +71,7 @@ class ImageGenerator:
             new_image.paste(image, img_positions[index])
 
         draw = ImageDraw.Draw(new_image)
-        font = ImageFont.truetype(f"{INPUT}/fonts/font.ttf", 30)
+        font = ImageFont.truetype(f"{INPUT}/fonts/font.ttf", 60)
 
         text_positions = [
             (2 * offset + single_width, offset),

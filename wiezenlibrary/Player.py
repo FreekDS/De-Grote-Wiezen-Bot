@@ -1,5 +1,5 @@
 from typing import List
-from Card import Card, CardType
+from wiezenlibrary.Card import Card, CardType
 
 PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
