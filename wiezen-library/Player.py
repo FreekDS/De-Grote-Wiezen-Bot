@@ -1,5 +1,5 @@
 from typing import List
-from Card import Card
+from Card import Card, CardType
 
 PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
@@ -21,6 +21,10 @@ class Player:
 
     def show_cards(self):
         pass
+
+    @property
+    def must_start(self):
+        return Card(CardType.SCHOPPEN, 2) in self.hand
 
     @staticmethod
     def get_strats():
