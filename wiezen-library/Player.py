@@ -20,7 +20,7 @@ class Player:
         self.hand.remove(card)
 
     def show_cards(self):
-        pass
+        return self.hand
 
     @property
     def must_start(self):
