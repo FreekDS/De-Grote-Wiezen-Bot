@@ -26,6 +26,10 @@ class Player:
     def must_start(self):
         return Card(CardType.SCHOPPEN, 2) in self.hand
 
+    async def ask_shuffles(self):
+        await self.discord_member.send("gij zijt den dealer")
+        await self.discord_member.send("hoeveel keer wilde shufflen?")
+
     @staticmethod
     def get_strats():
         return PLAYER_STRATS
