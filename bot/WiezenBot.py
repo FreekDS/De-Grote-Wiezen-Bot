@@ -1,7 +1,6 @@
 import discord
-
 from DiscordWiezer import DiscordWiezer
-from Game import Game
+from wiezenlibrary.Game import Game
 from discord.ext import commands
 
 

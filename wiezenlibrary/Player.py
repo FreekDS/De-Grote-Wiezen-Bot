@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 from typing import List
-from Card import Card, CardType
+from wiezenlibrary.Card import Card, CardType
 
 PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
@@ -16,10 +16,10 @@ class Player(ABC):
         self.hand: List[Card] = []
         self.partner: Player or None = None
         self.identifier=identifier
-        self.name=name
         self.round_wins: int = 0
         self.strategy: str or None = None
         self.is_dealer: bool = is_dealer
+        self.name: str = name
 
     def give_card(self, card: Card):
         self.hand.append(card)
