@@ -1,14 +1,22 @@
+from abc import ABC,abstractmethod
 from typing import List
 from Card import Card, CardType
 
 PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
 
-class Player:
-    def __init__(self, discord_member, is_dealer: bool):
+class Player(ABC):
+    def __init__(self, name:str ,identifier:str,is_dealer: bool):
+        """
+        init of ths abstract class
+        :param name: the name for this user
+        :param identifier: the unique identifier for this user
+        :param is_dealer: a bool denoting whether the player is a dealer
+        """
         self.hand: List[Card] = []
-        self.discord_member = discord_member
         self.partner: Player or None = None
+        self.identifier=identifier
+        self.name=name
         self.round_wins: int = 0
         self.strategy: str or None = None
         self.is_dealer: bool = is_dealer
@@ -27,9 +35,13 @@ class Player:
         return Card(CardType.SCHOPPEN, 2) in self.hand
 
     async def ask_shuffles(self):
-        await self.discord_member.send("gij zijt den dealer")
-        await self.discord_member.send("hoeveel keer wilde shufflen?")
+        await self.send_message("gij zijt den dealer")
+        await self.send_message("hoeveel keer wilde shufflen?")
 
     @staticmethod
     def get_strats():
         return PLAYER_STRATS
+
+    @abstractmethod
+    async def send_message(self,message):
+        pass

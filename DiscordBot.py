@@ -18,6 +18,9 @@ async def on_ready():
 
 if __name__ == '__main__':
     from WiezenBot import WiezenBot
+    from Donut import Donut
     bot.add_cog(WiezenBot(bot))
+    # Donut is vervallen :(
+    # bot.add_cog(Donut(bot))
     bot.run(TOKEN)
 
