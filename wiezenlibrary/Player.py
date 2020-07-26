@@ -42,6 +42,5 @@ class Player(ABC):
     def get_strats():
         return PLAYER_STRATS
 
-    @abstractmethod
     async def send_message(self, message):
-        pass
+        raise NotImplemented()
