@@ -1,4 +1,4 @@
-from abc import ABC,abstractmethod
+from abc import ABC, abstractmethod
 from typing import List
 from wiezenlibrary.Card import Card, CardType
 
@@ -6,7 +6,7 @@ PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
 
 
 class Player(ABC):
-    def __init__(self, name:str ,identifier:str,is_dealer: bool):
+    def __init__(self, name: str, identifier: str, is_dealer: bool):
         """
         init of ths abstract class
         :param name: the name for this user
@@ -15,7 +15,7 @@ class Player(ABC):
         """
         self.hand: List[Card] = []
         self.partner: Player or None = None
-        self.identifier=identifier
+        self.identifier = identifier
         self.round_wins: int = 0
         self.strategy: str or None = None
         self.is_dealer: bool = is_dealer
@@ -43,5 +43,5 @@ class Player(ABC):
         return PLAYER_STRATS
 
     @abstractmethod
-    async def send_message(self,message):
+    async def send_message(self, message):
         pass

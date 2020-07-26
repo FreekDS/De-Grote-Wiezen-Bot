@@ -15,7 +15,7 @@ class Deck:
         return self.cards.pop()
 
     def reset(self):
-        self.cards = [Card(t, v) for t in range(0, 4) for v in range(1,14)]
+        self.cards = [Card(t, v) for t in range(0, 4) for v in range(1, 14)]
 
     def __repr__(self):
         return str(self.cards)

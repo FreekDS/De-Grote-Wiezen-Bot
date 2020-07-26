@@ -1,3 +1,10 @@
+"""
+     ---------------------------------------
+    | Created by:                           |
+    | Thibaut Van Goethem & Freek De Sagher |
+     ---------------------------------------
+"""
+
 # bot.py
 import os
 
@@ -18,8 +25,8 @@ async def on_ready():
 
 if __name__ == '__main__':
     from bot.WiezenBot import WiezenBot
+
     bot.add_cog(WiezenBot(bot))
     # Donut is vervallen :(
     # bot.add_cog(Donut(bot))
     bot.run(TOKEN)
-

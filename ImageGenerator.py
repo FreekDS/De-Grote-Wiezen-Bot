@@ -4,8 +4,11 @@ from wiezenlibrary.Card import Card, CardType
 from wiezenlibrary.Player import Player
 import os
 
-""" CARDS NAMING SCHEME: cardType_#.png """
-""" CARDS # VALUES: [1,13] """
+""" 
+    CARDS NAMING SCHEME: cardType_#.png 
+    CARDS # VALUES: [1,13] 
+    cardType VALUES: ["koeken", "harten", "klaveren", "schoppen"] 
+"""
 
 OUTPUT = "output"
 INPUT = "assets"
@@ -42,7 +45,6 @@ class ImageGenerator:
 
     @staticmethod
     def _get_card_img(card: Card):
-        return "kaart.png"
         return f"{INPUT}/decks/1/{CardType.get_name(card.type)}_{card.value}.png"
 
     @staticmethod
