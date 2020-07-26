@@ -41,12 +41,8 @@ class Card:
 
     def __str__(self):
         second = self.value
-        if self.value == 11:
-            second = 'boer'
-        elif self.value == 12:
-            second = 'dame'
-        elif self.value == 13:
-            second = 'koning'
+        if self.value > 10:
+            second = Beilekes.get_name(self.value)
         return f"{CardType.get_name(self.type)} {second}"
 
     def __repr__(self):
@@ -61,9 +57,13 @@ class Card:
     def __gt__(self, other):
         return self.value < other.value and self.type == other.type
 
+    @property
+    def image_name(self):
+        return f"{CardType.get_name(self.type)}{self.value:02d}"
+
 
 if __name__ == '__main__':
-    card1 = Card(CardType.KOEKEN, 10)
-    card2 = Card(CardType.KOEKEN, 2)
-    print(card1 < card2)
-    print(card1, card2)
+    card1 = Card(CardType.KOEKEN, Beilekes.DAME)
+    card2 = Card(CardType.KOEKEN, Beilekes.KONING)
+    print(card1 < card2, card1.image_name)
+    print(card1, card2, card2.image_name)
