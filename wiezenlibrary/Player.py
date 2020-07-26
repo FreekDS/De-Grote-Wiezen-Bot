@@ -14,7 +14,6 @@ class Player(ABC):
         :param is_dealer: a bool denoting whether the player is a dealer
         """
         self.hand: List[Card] = []
-        self.partner: Player or None = None
         self.identifier = identifier
         self.round_wins: int = 0
         self.strategy: str or None = None
@@ -44,3 +43,13 @@ class Player(ABC):
 
     async def send_message(self, message):
         raise NotImplemented()
+
+    def count_aces(self):
+        count=0
+        for card in self.hand:
+            if card.value==1:
+               count+=1
+        return count
+
+    def has_card(self,card):
+        return card in self.hand

@@ -6,6 +6,9 @@ from wiezenlibrary.Player import Player
 from wiezenlibrary.Card import Card
 import enum
 
+from Card import CardType
+from Team import Team
+
 
 class GameState(enum.Enum):
     DEALING = 0
@@ -21,6 +24,7 @@ START_OPTIONS = ["Vraag", "Pas", "Solo slim", "Miserie"]
 class Game:
     def __init__(self):
         self.card_deck = Deck()
+        self.teams = list()
         self.players: List[Player] = []
         self.table: List[Card] = []
         self.state = None
@@ -45,37 +49,67 @@ class Game:
             await self.handle_question(player, action)
 
     async def handle_question(self, player, action):
+
         if self.answered is not None:
+
+            if (self.players[self.turn + len(self.answered)+1].identifier != player.identifier):
+                await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
+                return
             # FIXME: zet dit terug aan voor int echt, als dat nu aan gaat kan ik niet meer met mezelf spelen
             # if(list.index(self.players,player)<=self.turn+len(self.answered())):
             #     await player.send_message("elaba gij moogt niet meer antwoorden")
             #     return
             if action == "nee":
-                self.answered.append(player)
-                if len(self.answered) == 3 - self.turn:
-                    self.turn += 1
-                    # FIXME hier moet iets om naar volgende beurt te gaan
-                else:
-                    await self.players[self.turn + len(self.answered) + 1].send_message(
-                        "den %s vraagt, wilt ge mee? ja/nee" %
-                        self.players[self.turn].name)
-
+                await self.handle_no_answer(player)
             elif action == "ja":
-
-                leftover = copy.copy(self.players)
-                temp = list.index(self.players, player)
-                leftover.pop(temp)
-                leftover.pop(self.turn)
-                await self.send_to(self.players,
-                                   "%s heeft een coalitie gemaakt met %s, dus nu moeten %s en %s maar samen" %
-                                   (self.players[self.turn].name, player.name, leftover[0].name, leftover[1].name))
-                # FIXME hier met iets staan om mensen te koppelen en verder te gaan
+                await self.handle_Yes_answer(player)
         else:
+            if (self.players.index(player) != self.turn):
+                await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
+                return
             if action == "Vraag":
-                self.answered = list()
-                await self.players[self.turn + len(self.answered) + 1].send_message(
-                    "den %s vraagt, wilt ge mee? ja/nee" %
-                    self.players[self.turn].name)
+                await self.handle_vraag_answer()
+            elif action == "Pas":
+                await self.handle_pas_answer(player)
+
+    async def handle_pas_answer(self, player):
+        await self.send_to(self.players, "den %s zegt dat hem moet passen van zijn moeder" % player.name)
+        await self.advance_turn()
+        await self.send_card_question()
+
+    async def handle_vraag_answer(self):
+        self.answered = list()
+        await self.players[self.turn + len(self.answered) + 1].send_message(
+            "den %s vraagt, wilt ge mee? ja/nee" %
+            self.players[self.turn].name)
+
+    async def handle_Yes_answer(self, player):
+
+        await self.send_to(self.players,
+                           "%s heeft een coalitie gemaakt met %s" %
+                           (self.players[self.turn].name, player.name))
+        self.make_team([self.players[self.turn], player])
+        self.state = GameState.PLAYING
+
+    async def handle_no_answer(self, player):
+        self.answered.append(player)
+        if len(self.answered) == 3 - self.turn:
+            await self.send_to(self.players, "niemand wilt mee met den %s, sad" % self.players[self.turn].name)
+            await self.advance_turn()
+            self.answered = None
+            await self.send_card_question()
+        else:
+            await self.players[self.turn + len(self.answered) + 1].send_message(
+                "den %s vraagt, wilt ge mee? ja/nee" %
+                self.players[self.turn].name)
+
+    async def advance_turn(self):
+        self.turn += 1
+        if self.turn>3:
+            await self.send_to(self.players, "allé dat we niet willen spelen dan beginnen we maar opnieuw hé")
+            self.state=GameState.DEALING
+            self.turn=0
+            await self.dealer.ask_shuffles()
 
     async def start_game(self):
         self.state = GameState.DEALING
@@ -83,14 +117,52 @@ class Game:
 
     async def start_questions(self):
         self.state = GameState.START
-        for idx, player in enumerate(self.players):
-            if player.must_start:
-                self.turn = 0
-                newlist = self.players[idx:]
-                newlist += self.players[:idx]
-                self.players = newlist
-                break
+        if(await self.check_troel()):
+            self.state = GameState.PLAYING
+        else:
+            for idx, player in enumerate(self.players):
+                if player.must_start:
+                    self.turn = 0
+                    newlist = self.players[idx:]
+                    newlist += self.players[:idx]
+                    self.players = newlist
+                    break
+            await self.send_card_question()
+
+    async def send_card_question(self):
         await self.players[self.turn].send_message("wat wilde doen met uw kaarten: %s" % START_OPTIONS)
+
+    async def check_troel(self):
+        for player in self.players:
+            if player.count_aces()==3:
+                for team_player in self.players:
+                    if team_player.count_aces()==1:
+                        await self.send_to(self.players,"den %s heeft 3 azen dus hij moet samen met %s"%(player.name,team_player.name))
+                        self.make_team([player,team_player])
+                        return True
+            if player.count_aces()==4:
+                heart_value=13
+                while(True):
+                    for team_player in self.players:
+                        if team_player.has_card(Card(CardType.HARTEN,heart_value)) and team_player is not player:
+                            await self.send_to(self.players, "den %s heeft 4 azen dus hij moet samen met %s" % (player.name,
+                                               team_player.name))
+                            self.make_team([player, team_player])
+                            return True
+                    heart_value-=1
+        return False
+
+    def make_team(self,team_players: list):
+        """
+        makes a team of the given team_players and places the other players in the other team
+        :param team_player: players in list form
+        :return: nothing
+        """
+        leftover = copy.copy(self.players)
+        for toremove in team_players:
+            leftover.remove(toremove)
+        self.teams = [team_players, leftover]
+
 
     @property
     def dealer(self):
@@ -114,6 +186,6 @@ class Game:
         for player in self.players:
             await player.send_message(player.show_cards())
 
-    async def send_to(self, players, message):
+    async def send_to(self, players:list, message:str):
         for player in players:
             await player.send_message(message)
