@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from Donut import Donut
+# from Donut import Donut
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')

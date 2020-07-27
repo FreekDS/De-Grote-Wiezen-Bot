@@ -1,13 +1,16 @@
 import copy
 
+from discord import File
+
+from ImageGenerator import ImageGenerator
 from wiezenlibrary.Deck import Deck
 from typing import List
 from wiezenlibrary.Player import Player
 from wiezenlibrary.Card import Card
 import enum
 
-from Card import CardType
-from Team import Team
+from wiezenlibrary.Card import CardType
+from wiezenlibrary.Team import Team
 
 
 class GameState(enum.Enum):
@@ -52,7 +55,7 @@ class Game:
 
         if self.answered is not None:
 
-            if (self.players[self.turn + len(self.answered)+1].identifier != player.identifier):
+            if self.players[self.turn + len(self.answered) + 1].identifier != player.identifier:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
             # FIXME: zet dit terug aan voor int echt, als dat nu aan gaat kan ik niet meer met mezelf spelen
@@ -64,7 +67,7 @@ class Game:
             elif action == "ja":
                 await self.handle_Yes_answer(player)
         else:
-            if (self.players.index(player) != self.turn):
+            if self.players.index(player) != self.turn:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
             if action == "Vraag":
@@ -105,10 +108,10 @@ class Game:
 
     async def advance_turn(self):
         self.turn += 1
-        if self.turn>3:
+        if self.turn > 3:
             await self.send_to(self.players, "allé dat we niet willen spelen dan beginnen we maar opnieuw hé")
-            self.state=GameState.DEALING
-            self.turn=0
+            self.state = GameState.DEALING
+            self.turn = 0
             await self.dealer.ask_shuffles()
 
     async def start_game(self):
@@ -117,7 +120,7 @@ class Game:
 
     async def start_questions(self):
         self.state = GameState.START
-        if(await self.check_troel()):
+        if await self.check_troel():
             self.state = GameState.PLAYING
         else:
             for idx, player in enumerate(self.players):
@@ -134,35 +137,36 @@ class Game:
 
     async def check_troel(self):
         for player in self.players:
-            if player.count_aces()==3:
+            if player.count_aces() == 3:
                 for team_player in self.players:
-                    if team_player.count_aces()==1:
-                        await self.send_to(self.players,"den %s heeft 3 azen dus hij moet samen met %s"%(player.name,team_player.name))
-                        self.make_team([player,team_player])
+                    if team_player.count_aces() == 1:
+                        await self.send_to(self.players, "den %s heeft 3 azen dus hij moet samen met %s" % (
+                        player.name, team_player.name))
+                        self.make_team([player, team_player])
                         return True
-            if player.count_aces()==4:
-                heart_value=13
-                while(True):
+            if player.count_aces() == 4:
+                heart_value = 13
+                while True:
                     for team_player in self.players:
-                        if team_player.has_card(Card(CardType.HARTEN,heart_value)) and team_player is not player:
-                            await self.send_to(self.players, "den %s heeft 4 azen dus hij moet samen met %s" % (player.name,
-                                               team_player.name))
+                        if team_player.has_card(Card(CardType.HARTEN, heart_value)) and team_player is not player:
+                            await self.send_to(self.players,
+                                               "den %s heeft 4 azen dus hij moet samen met %s" % (player.name,
+                                                                                                  team_player.name))
                             self.make_team([player, team_player])
                             return True
-                    heart_value-=1
+                    heart_value -= 1
         return False
 
-    def make_team(self,team_players: list):
+    def make_team(self, team_players: list):
         """
         makes a team of the given team_players and places the other players in the other team
-        :param team_player: players in list form
+        :param team_players: players in list form
         :return: nothing
         """
         leftover = copy.copy(self.players)
         for toremove in team_players:
             leftover.remove(toremove)
         self.teams = [team_players, leftover]
-
 
     @property
     def dealer(self):
@@ -183,9 +187,13 @@ class Game:
                 player.give_card(self.card_deck.get_card())
 
     async def show_cards(self):
+        img_gen = ImageGenerator(1)
         for player in self.players:
-            await player.send_message(player.show_cards())
+            img_gen.hand_to_image(player)
+            img_file = File(img_gen.get_output('hand').strip())
+            await player.send_message("Hier zijn uwer kaarten")
+            await player.send_message(img_file, is_file=True)
 
-    async def send_to(self, players:list, message:str):
+    async def send_to(self, players: list, message: str):
         for player in players:
             await player.send_message(message)

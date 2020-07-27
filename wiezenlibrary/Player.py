@@ -41,7 +41,7 @@ class Player(ABC):
     def get_strats():
         return PLAYER_STRATS
 
-    async def send_message(self, message):
+    async def send_message(self, message, is_file=False):
         raise NotImplemented()
 
     def count_aces(self):

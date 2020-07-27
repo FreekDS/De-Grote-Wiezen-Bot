@@ -10,5 +10,8 @@ class DiscordWiezer(Player):
         super(DiscordWiezer, self).__init__(discord_member.name, str(discord_member.id), is_dealer)
         self.discord_member = discord_member
 
-    async def send_message(self, message):
-        await self.discord_member.send(message)
+    async def send_message(self, message, is_file=False):
+        if is_file:
+            await self.discord_member.send(file=message)
+        else:
+            await self.discord_member.send(message)

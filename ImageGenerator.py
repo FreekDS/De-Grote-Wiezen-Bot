@@ -98,6 +98,13 @@ class ImageGenerator:
         new_image.save(f"{OUTPUT}/table.png")
         new_image.close()
 
+    @staticmethod
+    def get_output(img_type: str):
+        if img_type in ['table', 'hand']:
+            return f"{OUTPUT}/{img_type}.png"
+        else:
+            return ""
+
 
 if __name__ == '__main__':
     layout = [

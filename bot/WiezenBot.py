@@ -1,5 +1,5 @@
 import discord
-from DiscordWiezer import DiscordWiezer
+from bot.DiscordWiezer import DiscordWiezer
 from wiezenlibrary.Game import Game, GameState
 from discord.ext import commands
 
