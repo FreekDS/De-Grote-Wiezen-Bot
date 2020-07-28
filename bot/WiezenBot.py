@@ -35,4 +35,8 @@ class WiezenBot(commands.Cog):
         if msg.author not in self.players:
             await msg.author.send("Gij speelt ni mee he vriendschap")
             return
+        if msg == 'reset':
+            self.game.reset()
+            await self.game.start_game()
         await self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id)), msg.content)
+

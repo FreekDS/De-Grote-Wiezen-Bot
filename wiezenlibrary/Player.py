@@ -31,7 +31,7 @@ class Player(ABC):
 
     @property
     def must_start(self):
-        return Card(CardType.SCHOPPEN, 2) in self.hand
+        return self.has_card(Card(CardType.SCHOPPEN, 2))
 
     async def ask_shuffles(self):
         await self.send_message("gij zijt den dealer")
@@ -45,11 +45,11 @@ class Player(ABC):
         raise NotImplemented()
 
     def count_aces(self):
-        count=0
+        count = 0
         for card in self.hand:
-            if card.value==1:
-               count+=1
+            if card.value == 1:
+                count += 1
         return count
 
-    def has_card(self,card):
+    def has_card(self, card):
         return card in self.hand

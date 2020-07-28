@@ -85,6 +85,7 @@ class Game:
         await self.players[self.turn + len(self.answered) + 1].send_message(
             "den %s vraagt, wilt ge mee? ja/nee" %
             self.players[self.turn].name)
+        await self.advance_turn()
 
     async def handle_Yes_answer(self, player):
 
@@ -109,10 +110,13 @@ class Game:
     async def advance_turn(self):
         self.turn += 1
         if self.turn > 3:
-            await self.send_to(self.players, "allé dat we niet willen spelen dan beginnen we maar opnieuw hé")
-            self.state = GameState.DEALING
-            self.turn = 0
-            await self.dealer.ask_shuffles()
+            if self.state.state == GameState.START:
+                await self.send_to(self.players, "allé dat we niet willen spelen dan beginnen we maar opnieuw hé")
+                self.state = GameState.DEALING
+                self.turn = 0
+                await self.dealer.ask_shuffles()
+            else:
+                self.turn = 0
 
     async def start_game(self):
         self.state = GameState.DEALING
@@ -197,3 +201,7 @@ class Game:
     async def send_to(self, players: list, message: str):
         for player in players:
             await player.send_message(message)
+
+    def reset(self):
+        self.state = GameState.DEALING
+        self.players.clear()
