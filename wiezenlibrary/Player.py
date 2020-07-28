@@ -1,8 +1,10 @@
+import enum
 from abc import ABC, abstractmethod
 from typing import List
 from wiezenlibrary.Card import Card, CardType
 
-PLAYER_STRATS = ["Miserie", "Abondance", "Troel", "Solo"]
+
+
 
 
 class Player(ABC):
@@ -16,7 +18,6 @@ class Player(ABC):
         self.hand: List[Card] = []
         self.identifier = identifier
         self.round_wins: int = 0
-        self.strategy: str or None = None
         self.is_dealer: bool = is_dealer
         self.name: str = name
 
@@ -37,10 +38,6 @@ class Player(ABC):
         await self.send_message("gij zijt den dealer")
         await self.send_message("hoeveel keer wilde shufflen?")
 
-    @staticmethod
-    def get_strats():
-        return PLAYER_STRATS
-
     async def send_message(self, message, is_file=False):
         raise NotImplemented()
 
@@ -50,6 +47,13 @@ class Player(ABC):
             if card.value == 1:
                 count += 1
         return count
+
+    def get_aces(self):
+        aces=list()
+        for card in self.hand:
+            if card.value == 1:
+                aces.append(card)
+        return aces
 
     def has_card(self, card):
         return card in self.hand
