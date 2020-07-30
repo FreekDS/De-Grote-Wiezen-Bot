@@ -41,6 +41,11 @@ class Player(ABC):
     async def send_message(self, message, is_file=False):
         raise NotImplemented()
 
+    def get_card(self,index):
+        card=self.hand[index]
+        self.hand.remove(card)
+        return card
+
     def count_aces(self):
         count = 0
         for card in self.hand:

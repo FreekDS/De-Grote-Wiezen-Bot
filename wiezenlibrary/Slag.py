@@ -16,13 +16,13 @@ class Slag():
                 continue
             if(played[1].type==self.troef):
                 if(highest[1].type==self.troef):
-                    highest=played if played[1].value>played[1].value else highest
+                    highest=played if played[1].value>highest[1].value else highest
                 else:
                     highest=played
             else:
                 if(highest[1].type==self.troef):
                     continue
                 else:
-                    highest = played if played[1].value > played[1].value else highest
+                    highest = played if played[1].value > highest[1].value else highest
         return highest
 

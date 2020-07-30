@@ -93,7 +93,7 @@ class Game:
 
     async def handle_solo_answer(self, player):
         await self.send_to(self.players, "den %s gaat solo" % player.name)
-        self.make_team([player])
+        self.make_team([player],PLAYER_STRATS.SOLOSOLO)
         await self.start_rounds()
 
     async def handle_dansen_answer(self, player):
@@ -165,9 +165,7 @@ class Game:
         self.state = GameState.PLAYING
         for idx, player in enumerate(self.players):
             if player.must_start:
-                newlist = self.players[idx:]
-                newlist += self.players[:idx]
-                self.players = newlist
+                self.reorder_players(idx)
                 self.turn = 0
                 await self.send_to(self.players, "den %s mag beginnen" % self.players[0].name)
                 await self.show_cards([self.players[0]])
@@ -175,19 +173,30 @@ class Game:
                 self.current_slag = Slag(self.troef)
                 break
 
+    def reorder_players(self, idx):
+        """
+        Function that places the player at idx to the front of the array while keeping the array order
+        :param idx: the idx of the player
+        :return: nothing
+        """
+        newlist = self.players[idx:]
+        newlist += self.players[:idx]
+        self.players = newlist
+
     async def handle_gameplay_message(self, player, action):
-        if self.players.index(player) != self.turn:
+        if  self.players[self.turn].identifier!=player.identifier:
             await self.send_to([player], "Wacht eens op uw beurt maneke")
             return
-        try:
-            card_index = int(action) + 1
-            chosen_card = player.hand[card_index]
-            await self.send_to(self.players, "den %s legt een %s" % (player.name, chosen_card))
-            self.current_slag.lay_card(player, chosen_card)
-            self.advance_gameplay_turn()
+        # FIXME zet dit terug aan opt einde
+        # try:
+        card_index = int(action) - 1
+        chosen_card = self.players[self.turn].get_card(card_index)
+        await self.send_to(self.players, "den %s legt een %s" % (player.name, chosen_card))
+        self.current_slag.lay_card(player, chosen_card)
+        await self.advance_gameplay_turn()
+        # except Exception as e:
+        #     await self.send_to([player], "Geeft eens een geldige kaart man")
 
-        except Exception as e:
-            await self.send_to([player], "Geeft eens een geldige kaart man")
 
     # TODO een goeie check functie maken
     def check_allowed(self, player, card):
@@ -196,11 +205,24 @@ class Game:
     async def advance_gameplay_turn(self):
         self.turn += 1
         if (self.turn > 3):
+            winner=self.current_slag.check_winner()
             await self.send_to(self.players,
-                               "den %s wint de slag, maar den thibaut heeft de verdere loop van het spel nog niet gemaakt dus ge zult hier moeten stoppen" %
-                               self.current_slag.check_winner[0].name)
-        else:
-            await self.send_to(self.players[self.turn], "welke kaardt wilde leggen?")
+                               "den %s wint de slag met een %s" %
+                               (winner[0].name,str(winner[1])))
+            winner[0].round_wins+=1
+            self.reorder_players(self.players.index(winner[0]))
+            if(self.teams[0].check_team_win(self.teams[1])):
+                await self.send_to(self.players,"gohoho het team van %s is gewonnen"%(str(self.teams[0])))
+                self.reset()
+                return
+            if (self.teams[1].check_team_win(self.teams[0])):
+                await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[1])))
+                self.reset()
+                return
+            self.turn=0
+
+        await self.show_cards([self.players[self.turn]])
+        await self.send_to([self.players[self.turn]], "welke kaardt wilde leggen?")
 
 
 
@@ -215,7 +237,7 @@ class Game:
                         self.troef = team_player.get_aces()[0].type
                         await self.send_to(self.players,
                                            "den %s heeft 3 azen dus hij moet samen met %s en den %s is troef nu" % (
-                                               player.name, team_player.name, self.troef))
+                                               player.name, team_player.name,CardType.get_name(self.troef)))
                         self.make_team([player, team_player], PLAYER_STRATS.TROELMETAZEN)
                         return True
             if player.count_aces() == 4:
@@ -227,7 +249,7 @@ class Game:
                             await self.send_to(self.players,
                                                "den %s heeft 4 azen dus hij moet samen met %s en %s is troef nu" % (
                                                    player.name,
-                                                   team_player.name, self.troef))
+                                                   team_player.name, CardType.get_name(self.troef)))
                             self.make_team([player, team_player], PLAYER_STRATS.TROELMETAZEN)
                             return True
                     heart_value -= 1
