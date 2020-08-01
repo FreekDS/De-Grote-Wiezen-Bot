@@ -43,8 +43,11 @@ class Player(ABC):
 
     def get_card(self,index):
         card=self.hand[index]
-        self.hand.remove(card)
         return card
+
+    def remove_card(self,index):
+        card=self.hand[index]
+        self.hand.remove(card)
 
     def count_aces(self):
         count = 0
@@ -62,3 +65,9 @@ class Player(ABC):
 
     def has_card(self, card):
         return card in self.hand
+    def has_type(self,type):
+        has_type=False
+        for card in self.hand:
+            if(card.type==type):
+                has_type=True
+        return has_type

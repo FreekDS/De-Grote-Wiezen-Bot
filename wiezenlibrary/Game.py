@@ -170,7 +170,7 @@ class Game:
                 await self.send_to(self.players, "den %s mag beginnen" % self.players[0].name)
                 await self.show_cards([self.players[0]])
                 await self.send_to([self.players[0]], "welke kaardt wilde leggen?")
-                self.current_slag = Slag(self.troef)
+                self.current_slag = Slag(self.troef,True)
                 break
 
     def reorder_players(self, idx):
@@ -191,15 +191,28 @@ class Game:
         # try:
         card_index = int(action) - 1
         chosen_card = self.players[self.turn].get_card(card_index)
-        await self.send_to(self.players, "den %s legt een %s" % (player.name, chosen_card))
-        self.current_slag.lay_card(player, chosen_card)
-        await self.advance_gameplay_turn()
+        if(await self.check_allowed(player,chosen_card)):
+            self.players[self.turn].remove_card(card_index)
+            await self.send_to(self.players, "den %s legt een %s" % (player.name, chosen_card))
+            self.current_slag.lay_card(player, chosen_card)
+            await self.advance_gameplay_turn()
         # except Exception as e:
         #     await self.send_to([player], "Geeft eens een geldige kaart man")
 
 
-    # TODO een goeie check functie maken
-    def check_allowed(self, player, card):
+    async def check_allowed(self, player, card):
+        # You can't lay a troef in the firuf<st slag
+        if self.current_slag.first:
+            if card.type==self.troef:
+                await self.send_to([player],"mateke ge geen troef leggen in den eerste slag")
+                return False
+        # First card in a slag that is being laid
+        if(self.current_slag.type==None):return True
+
+        if(player.has_type(self.current_slag.type)):
+            if(card.type!=self.current_slag.type):
+                await self.send_to([player], "seg gij kunt nog een kaart leggen dat overeen komt met het type van de slag, doe dat eens")
+                return False
         return True
 
     async def advance_gameplay_turn(self):
@@ -211,20 +224,23 @@ class Game:
                                (winner[0].name,str(winner[1])))
             winner[0].round_wins+=1
             self.reorder_players(self.players.index(winner[0]))
-            if(self.teams[0].check_team_win(self.teams[1])):
-                await self.send_to(self.players,"gohoho het team van %s is gewonnen"%(str(self.teams[0])))
-                self.reset()
-                return
-            if (self.teams[1].check_team_win(self.teams[0])):
-                await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[1])))
-                self.reset()
-                return
+            if(await self.check_team_wins()):return
+            self.current_slag = Slag(self.troef)
             self.turn=0
 
         await self.show_cards([self.players[self.turn]])
         await self.send_to([self.players[self.turn]], "welke kaardt wilde leggen?")
 
-
+    async def check_team_wins(self):
+        if (self.teams[0].check_team_win(self.teams[1])):
+            await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[0])))
+            self.reset()
+            return True
+        if (self.teams[1].check_team_win(self.teams[0])):
+            await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[1])))
+            self.reset()
+            return True
+        return False
 
     async def send_card_question(self):
         await self.players[self.turn].send_message("wat wilde doen met uw kaarten: %s" % START_OPTIONS)
