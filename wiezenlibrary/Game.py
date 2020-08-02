@@ -79,19 +79,15 @@ class Game:
 
         if self.answered is not None:
 
-            if self.players[self.turn + len(self.answered) + 1].identifier != player.identifier:
+            if self.players[self.turn + len(self.answered)+1].identifier != player.identifier:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
-            # FIXME: zet dit terug aan voor int echt, als dat nu aan gaat kan ik niet meer met mezelf spelen
-            # if(list.index(self.players,player)<=self.turn+len(self.answered())):
-            #     await player.send_message("elaba gij moogt niet meer antwoorden")
-            #     return
             if action == "nee":
                 await self.handle_no_answer(player)
             elif action == "ja":
                 await self.handle_Yes_answer(player)
         else:
-            if self.players.index(player) != self.turn:
+            if self.players[self.turn].identifier != player.identifier:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
             if action == "Vraag":
@@ -127,10 +123,11 @@ class Game:
 
     async def handle_vraag_answer(self):
         self.answered = list()
-        await self.players[self.turn + len(self.answered) + 1].send_message(
+        await self.players[self.turn + len(self.answered)+1].send_message(
             "den %s vraagt, wilt ge mee? ja/nee" %
             self.players[self.turn].name)
-        await self.advance_question_turn()
+        print(self.turn + len(self.answered)+1)
+        # await self.advance_question_turn()
 
     async def handle_Yes_answer(self, player):
 
@@ -148,7 +145,7 @@ class Game:
             self.answered = None
             await self.send_card_question()
         else:
-            await self.players[self.turn + len(self.answered) + 1].send_message(
+            await self.players[self.turn + len(self.answered)+1].send_message(
                 "den %s vraagt, wilt ge mee? ja/nee" %
                 self.players[self.turn].name)
 
