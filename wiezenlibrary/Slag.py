@@ -1,11 +1,11 @@
-from wiezenlibrary.Card import Card
+from wiezenlibrary.Card import Card, CardType
 from wiezenlibrary.Player import Player
 from typing import List, Tuple
 
 
 class Slag:
-    def __init__(self, troef: int, first=False):
-        self.troef = troef
+    def __init__(self, troef: CardType or int, first=False):
+        self.troef: CardType = troef
         # The type everyone must follow unless they cant
         self.type = None
         self.first = first
