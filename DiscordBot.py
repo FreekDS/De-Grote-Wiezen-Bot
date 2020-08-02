@@ -26,7 +26,7 @@ async def on_ready():
 
 
 if __name__ == '__main__':
-    from bot.WiezenBot import WiezenBot
+    from bot.WiezenCog import WiezenCog as WiezenBot
 
     bot.add_cog(WiezenBot(bot))
     # Donut is vervallen :(
