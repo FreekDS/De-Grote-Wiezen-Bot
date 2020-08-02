@@ -35,9 +35,11 @@ class Game:
         self.table: List[Card] = []
         self.troef = None
         self.current_slag: Slag or None = None
+        self.slag_count=0
         self.state = None
         self.turn = None
         self.answered = None
+
 
         self.bot = bot
 
@@ -67,7 +69,15 @@ class Game:
 
     async def handle_dealer_answer(self, action, player):
         if player.is_dealer:
-            self.card_deck.shuffle(int(action))
+            try:
+                if(int(action)>10000):
+                    await self.send_to([player], "das misschien wat te veel van het goede, pakt dat we met 1 keer beginnen")
+                    action="1"
+                self.card_deck.shuffle(int(action))
+            except Exception as e:
+                await self.send_to([player],"ok dat was grappig, maar nu moogt ge wel eens een geldig nummer geven.")
+                return
+
             await player.send_message("ge hebt %s keer geshoumeld" % action)
             await self.deal_cards()
             await self.show_cards(self.players)
@@ -76,9 +86,7 @@ class Game:
             await player.discord_member.send("mateke wacht eens op den dealer")
 
     async def handle_question(self, player, action):
-
         if self.answered is not None:
-
             if self.players[self.turn + len(self.answered)+1].identifier != player.identifier:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
@@ -126,11 +134,8 @@ class Game:
         await self.players[self.turn + len(self.answered)+1].send_message(
             "den %s vraagt, wilt ge mee? ja/nee" %
             self.players[self.turn].name)
-        print(self.turn + len(self.answered)+1)
-        # await self.advance_question_turn()
 
     async def handle_Yes_answer(self, player):
-
         await self.send_to(self.players,
                            "%s heeft een coalitie gemaakt met %s" %
                            (self.players[self.turn].name, player.name))
@@ -178,7 +183,8 @@ class Game:
             if player.must_start:
                 self.reorder_players(idx)
                 self.turn = 0
-                self.current_slag = Slag(self.troef, True)
+                await self.start_new_slag()
+                self.current_slag.first=True
                 await self.send_tables()
                 await self.send_to(self.players, "den %s mag beginnen" % self.players[0].name)
                 await self.show_cards([self.players[0]])
@@ -243,13 +249,17 @@ class Game:
             winner[0].round_wins += 1
             self.reorder_players(self.players.index(winner[0]))
             if await self.check_team_wins(): return
-            self.current_slag = Slag(self.troef)
-            await self.send_to(self.players, "<>===== Volgende Slag =====<>")
+            await self.start_new_slag()
             await self.send_tables()
             self.turn = 0
 
         await self.show_cards([self.players[self.turn]])
         await self.send_to([self.players[self.turn]], "welke kaardt wilde leggen?")
+
+    async def start_new_slag(self):
+        self.current_slag = Slag(self.troef)
+        self.slag_count += 1
+        await self.send_to(self.players, "<>===== Start Slag %s =====<>" % (self.slag_count))
 
     async def check_team_wins(self):
         if self.teams[0].check_team_win(self.teams[1]):
