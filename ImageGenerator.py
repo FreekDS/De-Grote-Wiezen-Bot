@@ -2,6 +2,7 @@ from PIL import Image, ImageFont, ImageDraw
 from typing import List, Tuple
 from wiezenlibrary.Card import Card, CardType, Beilekes
 from wiezenlibrary.Player import Player
+from wiezenlibrary.Slag import Slag
 import os
 
 """ 
@@ -13,11 +14,18 @@ import os
 OUTPUT = "output"
 INPUT = "assets"
 
+COLOR1 = (255, 0, 0)
+COLOR2 = (0, 0, 255)
+
 
 class ImageGenerator:
 
     def __init__(self, deck=1):
         self.deck = deck
+
+    @property
+    def font(self):
+        return ImageFont.truetype(f"{INPUT}/fonts/font.ttf", 60)
 
     def hand_to_image(self, player: Player, offset=10):
         if not player.hand:
@@ -29,10 +37,17 @@ class ImageGenerator:
         total_width = sum(widths) + (len(player.hand) - 1) * offset
         height = images[0].size[1]
 
-        new_image = Image.new('RGB', (total_width, height))
+        new_image = Image.new('RGB', (total_width, height + 4 * offset))
+        draw = ImageDraw.Draw(new_image)
+
         x_offset = 0
-        for image in images:
+        for index, image in enumerate(images):
             new_image.paste(image, (x_offset, 0))
+            num = str(index + 1)
+            tw, _ = draw.textsize(num)
+            text_pos = (x_offset + widths[0] / 2 - tw, height + offset / 2)
+            draw.text(text_pos, num, fill=(255,255,255), font=self.font)
+
             x_offset += image.size[0] + offset
             image.close()
 
@@ -81,7 +96,6 @@ class ImageGenerator:
                 image.close()
 
         draw = ImageDraw.Draw(new_image)
-        font = ImageFont.truetype(f"{INPUT}/fonts/font.ttf", 60)
 
         text_positions = [
             (2 * offset + single_width, offset),
@@ -93,7 +107,7 @@ class ImageGenerator:
         for index, name in enumerate(names):
             if name:
                 fill = (255, 215, 0) if table_layout[index][0].is_dealer else (255, 255, 255)
-                draw.text(text_positions[index], name, font=font, fill=fill)
+                draw.text(text_positions[index], name, font=self.font, fill=fill)
 
         new_image.save(f"{OUTPUT}/table.png")
         new_image.close()
@@ -114,4 +128,10 @@ if __name__ == '__main__':
         (Player("mark", "3", True), None)
     ]
 
-    ImageGenerator(1).generate_table(layout)
+    p = Player("Charles", "4", True)
+    p.give_card(Card(CardType.SCHOPPEN, 1))
+    p.give_card(Card(CardType.KLAVEREN, 2))
+    p.give_card(Card(CardType.KOEKEN, Beilekes.DAME))
+
+    # ImageGenerator(1).generate_table(layout)
+    ImageGenerator(1).hand_to_image(p)

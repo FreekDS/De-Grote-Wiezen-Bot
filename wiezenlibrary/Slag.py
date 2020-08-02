@@ -3,7 +3,7 @@ from wiezenlibrary.Player import Player
 from typing import List, Tuple
 
 
-class Slag():
+class Slag:
     def __init__(self, troef: int, first=False):
         self.troef = troef
         # The type everyone must follow unless they cant
@@ -27,7 +27,7 @@ class Slag():
                 else:
                     highest = played
             else:
-                if (highest[1].type == self.troef):
+                if highest[1].type == self.troef:
                     continue
                 else:
                     highest = played if played[1] > highest[1] else highest
