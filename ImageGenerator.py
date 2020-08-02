@@ -15,8 +15,8 @@ import os
 OUTPUT = "output"
 INPUT = "assets"
 
-COLOR1 = (252, 65, 3)
-COLOR2 = (3, 103, 252)
+COLOR1 = (255, 255, 255)
+COLOR2 = (0, 0, 0)
 BOARD_GREEN = (7, 99, 36)
 BOARD_GREY = (92, 90, 80)
 
