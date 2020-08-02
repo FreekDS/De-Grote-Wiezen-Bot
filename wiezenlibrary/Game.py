@@ -1,11 +1,11 @@
 import copy
 from pydoc import plain
 
-from discord import File
+from discord import File, Message
 
 from ImageGenerator import ImageGenerator
 from wiezenlibrary.Deck import Deck
-from typing import List
+from typing import List, Dict, Tuple
 from wiezenlibrary.Player import Player
 from wiezenlibrary.Card import Card
 import enum
@@ -13,7 +13,7 @@ import enum
 from wiezenlibrary.Card import CardType
 from wiezenlibrary.Team import Team, PLAYER_STRATS
 
-from Slag import Slag
+from wiezenlibrary.Slag import Slag
 
 
 class GameState(enum.Enum):
@@ -28,20 +28,51 @@ START_OPTIONS = ["Vraag", "Pas", "Dansen", "Solo", "Miserie"]
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, bot):
         self.card_deck = Deck()
         self.teams = list()
         self.players: List[Player] = []
         self.table: List[Card] = []
         self.troef = None
-        self.current_slag = None
+        self.current_slag: Slag or None = None
         self.state = None
         self.turn = None
         self.answered = None
 
+        self.bot = bot
+
+        # UI Related
+        self.table_messages: Dict[Player or str, Message or None] = dict()
+
+    def set_spectator_message(self, message: Message):
+        self.table_messages["SPECTATOR"] = message
+
+    def set_player_table_message(self, player: Player, message: Message):
+        if player not in self.table_messages.keys():
+            return False
+        self.table_messages[player] = message
+
+    @property
+    def table_layout(self):
+        if not self.current_slag:
+            raise AttributeError("Slag cannot be None")
+        layout: List[Tuple[Player, Card or None]] = list()
+        not_played: List[Player] = list()
+        for player in self.players:
+            for obj in self.current_slag.card_player_tuple:
+                if player == obj[0]:
+                    layout.append(obj)
+                    break
+            else:
+                not_played.append(player)
+        for player in not_played:
+            layout.append((player, None))
+        return layout
+
     def add_player(self, player: Player):
         dealer = player.is_dealer and not self.dealer  # make sure to only have one dealer
         self.players.append(player)
+        self.table_messages[player] = None
 
     async def perform_action(self, player, action):
         if self.state == GameState.DEALING:
@@ -93,7 +124,7 @@ class Game:
 
     async def handle_solo_answer(self, player):
         await self.send_to(self.players, "den %s gaat solo" % player.name)
-        self.make_team([player],PLAYER_STRATS.SOLOSOLO)
+        self.make_team([player], PLAYER_STRATS.SOLOSOLO)
         await self.start_rounds()
 
     async def handle_dansen_answer(self, player):
@@ -167,11 +198,17 @@ class Game:
             if player.must_start:
                 self.reorder_players(idx)
                 self.turn = 0
+                self.current_slag = Slag(self.troef, True)
+                await self.send_tables()
                 await self.send_to(self.players, "den %s mag beginnen" % self.players[0].name)
                 await self.show_cards([self.players[0]])
                 await self.send_to([self.players[0]], "welke kaardt wilde leggen?")
-                self.current_slag = Slag(self.troef,True)
                 break
+
+    async def send_tables(self):
+        ImageGenerator(1).generate_table(self.table_layout)
+        file = ImageGenerator(1).get_output('table').strip()
+        await self.send_to(self.players, file, img=True)
 
     def reorder_players(self, idx):
         """
@@ -184,59 +221,62 @@ class Game:
         self.players = newlist
 
     async def handle_gameplay_message(self, player, action):
-        if  self.players[self.turn].identifier!=player.identifier:
+        if self.players[self.turn].identifier != player.identifier:
             await self.send_to([player], "Wacht eens op uw beurt maneke")
             return
         # FIXME zet dit terug aan opt einde
         # try:
         card_index = int(action) - 1
         chosen_card = self.players[self.turn].get_card(card_index)
-        if(await self.check_allowed(player,chosen_card)):
+        if await self.check_allowed(player, chosen_card):
             self.players[self.turn].remove_card(card_index)
             await self.send_to(self.players, "den %s legt een %s" % (player.name, chosen_card))
             self.current_slag.lay_card(player, chosen_card)
+            await self.update_table_images()
             await self.advance_gameplay_turn()
         # except Exception as e:
         #     await self.send_to([player], "Geeft eens een geldige kaart man")
 
-
     async def check_allowed(self, player, card):
         # You can't lay a troef in the firuf<st slag
         if self.current_slag.first:
-            if card.type==self.troef:
-                await self.send_to([player],"mateke ge geen troef leggen in den eerste slag")
+            if card.type == self.troef:
+                await self.send_to([player], "mateke ge geen troef leggen in den eerste slag")
                 return False
         # First card in a slag that is being laid
-        if(self.current_slag.type==None):return True
+        if self.current_slag.type is None: return True
 
-        if(player.has_type(self.current_slag.type)):
-            if(card.type!=self.current_slag.type):
-                await self.send_to([player], "seg gij kunt nog een kaart leggen dat overeen komt met het type van de slag, doe dat eens")
+        if player.has_type(self.current_slag.type):
+            if card.type != self.current_slag.type:
+                await self.send_to([player],
+                                   "seg gij kunt nog een kaart leggen dat overeen komt met het type van de slag, doe dat eens")
                 return False
         return True
 
     async def advance_gameplay_turn(self):
         self.turn += 1
-        if (self.turn > 3):
-            winner=self.current_slag.check_winner()
+        if self.turn > 3:
+            winner = self.current_slag.check_winner()
             await self.send_to(self.players,
                                "den %s wint de slag met een %s" %
-                               (winner[0].name,str(winner[1])))
-            winner[0].round_wins+=1
+                               (winner[0].name, str(winner[1])))
+            winner[0].round_wins += 1
             self.reorder_players(self.players.index(winner[0]))
-            if(await self.check_team_wins()):return
+            if await self.check_team_wins(): return
             self.current_slag = Slag(self.troef)
-            self.turn=0
+            await self.send_to(self.players, "<>===== Volgende Slag =====<>")
+            await self.send_tables()
+            self.turn = 0
 
         await self.show_cards([self.players[self.turn]])
         await self.send_to([self.players[self.turn]], "welke kaardt wilde leggen?")
 
     async def check_team_wins(self):
-        if (self.teams[0].check_team_win(self.teams[1])):
+        if self.teams[0].check_team_win(self.teams[1]):
             await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[0])))
             self.reset()
             return True
-        if (self.teams[1].check_team_win(self.teams[0])):
+        if self.teams[1].check_team_win(self.teams[0]):
             await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[1])))
             self.reset()
             return True
@@ -253,7 +293,7 @@ class Game:
                         self.troef = team_player.get_aces()[0].type
                         await self.send_to(self.players,
                                            "den %s heeft 3 azen dus hij moet samen met %s en den %s is troef nu" % (
-                                               player.name, team_player.name,CardType.get_name(self.troef)))
+                                               player.name, team_player.name, CardType.get_name(self.troef)))
                         self.make_team([player, team_player], PLAYER_STRATS.TROELMETAZEN)
                         return True
             if player.count_aces() == 4:
@@ -313,9 +353,23 @@ class Game:
             await player.send_message("Hier zijn uwer kaarten")
             await player.send_message(img_file, is_file=True)
 
-    async def send_to(self, players: list, message: str):
+    async def send_to(self, players: list, message: str or File, img=False):
         for player in players:
-            await player.send_message(message)
+            if img:
+                file = File(message)
+                msg = await player.send_message(file, is_file=True)
+                self.table_messages[player] = msg
+            else:
+                await player.send_message(message)
+
+    async def update_table_images(self):
+        msg: Message
+        for msg in self.table_messages.values():
+            if msg:
+                await msg.delete()
+        await self.send_tables()
+
+
 
     def reset(self):
         self.state = GameState.DEALING

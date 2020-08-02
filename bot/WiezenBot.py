@@ -7,7 +7,7 @@ from discord.ext import commands
 class WiezenBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.game = Game()
+        self.game = Game(bot)
         self.players: list = []
 
     @commands.command(name='wiezen')

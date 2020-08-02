@@ -4,9 +4,6 @@ from typing import List
 from wiezenlibrary.Card import Card, CardType
 
 
-
-
-
 class Player(ABC):
     def __init__(self, name: str, identifier: str, is_dealer: bool):
         """
@@ -20,6 +17,8 @@ class Player(ABC):
         self.round_wins: int = 0
         self.is_dealer: bool = is_dealer
         self.name: str = name
+
+        self.last_played: Card or None = None
 
     def give_card(self, card: Card):
         self.hand.append(card)
@@ -41,12 +40,12 @@ class Player(ABC):
     async def send_message(self, message, is_file=False):
         raise NotImplemented()
 
-    def get_card(self,index):
-        card=self.hand[index]
+    def get_card(self, index):
+        card = self.hand[index]
         return card
 
-    def remove_card(self,index):
-        card=self.hand[index]
+    def remove_card(self, index):
+        card = self.hand[index]
         self.hand.remove(card)
 
     def count_aces(self):
@@ -57,7 +56,7 @@ class Player(ABC):
         return count
 
     def get_aces(self):
-        aces=list()
+        aces = list()
         for card in self.hand:
             if card.value == 1:
                 aces.append(card)
@@ -65,9 +64,10 @@ class Player(ABC):
 
     def has_card(self, card):
         return card in self.hand
-    def has_type(self,type):
-        has_type=False
+
+    def has_type(self, type):
+        has_type = False
         for card in self.hand:
-            if(card.type==type):
-                has_type=True
+            if (card.type == type):
+                has_type = True
         return has_type

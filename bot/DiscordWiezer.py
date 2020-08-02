@@ -1,4 +1,5 @@
 from wiezenlibrary.Player import Player
+from discord import File
 
 
 class DiscordWiezer(Player):
@@ -12,6 +13,6 @@ class DiscordWiezer(Player):
 
     async def send_message(self, message, is_file=False):
         if is_file:
-            await self.discord_member.send(file=message)
+            return await self.discord_member.send(file=message)
         else:
-            await self.discord_member.send(message)
+            return await self.discord_member.send(message)
