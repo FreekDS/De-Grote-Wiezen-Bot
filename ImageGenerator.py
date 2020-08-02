@@ -2,6 +2,7 @@ from PIL import Image, ImageFont, ImageDraw
 from typing import List, Tuple
 from wiezenlibrary.Card import Card, CardType, Beilekes
 from wiezenlibrary.Player import Player
+from wiezenlibrary.Team import Team
 from wiezenlibrary.Slag import Slag
 import os
 
@@ -14,8 +15,8 @@ import os
 OUTPUT = "output"
 INPUT = "assets"
 
-COLOR1 = (255, 0, 0)
-COLOR2 = (0, 0, 255)
+COLOR1 = (252, 65, 3)
+COLOR2 = (3, 103, 252)
 
 
 class ImageGenerator:
@@ -26,6 +27,23 @@ class ImageGenerator:
     @property
     def font(self):
         return ImageFont.truetype(f"{INPUT}/fonts/font.ttf", 60)
+
+    @staticmethod
+    def slag_to_layout(current_slag: Slag, players):
+        if not current_slag:
+            raise AttributeError("Slag cannot be None")
+        new_layout: List[Tuple[Player, Card or None]] = list()
+        not_played: List[Player] = list()
+        for player in players:
+            for obj in current_slag.card_player_tuple:
+                if player == obj[0]:
+                    new_layout.append(obj)
+                    break
+            else:
+                not_played.append(player)
+        for player in not_played:
+            new_layout.append((player, None))
+        return new_layout
 
     def hand_to_image(self, player: Player, offset=10):
         if not player.hand:
@@ -69,9 +87,10 @@ class ImageGenerator:
         with Image.open(self._get_card_img(Card(1, 1))) as image:
             return image.size
 
-    def generate_table(self, table_layout: List[Tuple[Player or None, Card or None]], offset=20):
+    def generate_table(self, current_slag: Slag, players: List[Player], teams: List[Team], offset=20):
         images = list()
         names = list()
+        table_layout = self.slag_to_layout(current_slag, players)
         for player, card in table_layout:
             images.append(Image.open(self._get_card_img(card)) if card else None)
             names.append(player.name if player else None)
@@ -106,7 +125,7 @@ class ImageGenerator:
 
         for index, name in enumerate(names):
             if name:
-                fill = (255, 215, 0) if table_layout[index][0].is_dealer else (255, 255, 255)
+                fill = COLOR1 if teams[0].has_player(table_layout[index][0]) else COLOR2
                 draw.text(text_positions[index], name, font=self.font, fill=fill)
 
         new_image.save(f"{OUTPUT}/table.png")

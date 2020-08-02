@@ -52,23 +52,6 @@ class Game:
             return False
         self.table_messages[player] = message
 
-    @property
-    def table_layout(self):
-        if not self.current_slag:
-            raise AttributeError("Slag cannot be None")
-        layout: List[Tuple[Player, Card or None]] = list()
-        not_played: List[Player] = list()
-        for player in self.players:
-            for obj in self.current_slag.card_player_tuple:
-                if player == obj[0]:
-                    layout.append(obj)
-                    break
-            else:
-                not_played.append(player)
-        for player in not_played:
-            layout.append((player, None))
-        return layout
-
     def add_player(self, player: Player):
         dealer = player.is_dealer and not self.dealer  # make sure to only have one dealer
         self.players.append(player)
@@ -206,7 +189,7 @@ class Game:
                 break
 
     async def send_tables(self):
-        ImageGenerator(1).generate_table(self.table_layout)
+        ImageGenerator(1).generate_table(self.current_slag, self.players, self.teams)
         file = ImageGenerator(1).get_output('table').strip()
         await self.send_to(self.players, file, img=True)
 
