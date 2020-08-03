@@ -1,5 +1,6 @@
 import discord
 from bot.DiscordWiezer import DiscordWiezer
+from discord import File
 from wiezenlibrary.Game import Game, GameState
 from discord.ext import commands
 
@@ -39,4 +40,17 @@ class WiezenBot(commands.Cog):
             self.game.reset()
             await self.game.start_game()
         await self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id)), msg.content)
+
+    @commands.command(name='hoewiezik')
+    async def wiezen(self, ctx,):
+        with open("assets/markdowns/HoeTFWiezIk.md",'r') as fileke:
+            await ctx.send(fileke.read())
+
+    @commands.command(name='help')
+    async def help(self,ctx):
+        with open('assets/boei.jpg', 'rb') as fileke:
+            await ctx.send("hier is hulp")
+            await ctx.send(file=discord.File(fileke))
+            with open("assets/markdowns/help.md", 'r') as help:
+                await ctx.send(help.read())
 
