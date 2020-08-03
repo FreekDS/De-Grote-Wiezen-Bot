@@ -4,6 +4,7 @@ from wiezenlibrary.Card import Card, CardType, Beilekes
 from wiezenlibrary.Player import Player
 from wiezenlibrary.Team import Team, PLAYER_STRATS
 from wiezenlibrary.Slag import Slag
+from math import ceil
 import os
 
 """ 
@@ -145,6 +146,9 @@ class ImageGenerator:
     def _table_base(self, current_slag: Slag, players: List[Player], teams: List[Team], offset=20):
         images = list()
         names = list()
+
+        bg_img = Image.open(f'{INPUT}/bg.png')
+
         table_layout = self.slag_to_layout(current_slag, players)
         for player, card in table_layout:
             images.append(Image.open(self._get_card_img(card)) if card else None)
@@ -155,7 +159,14 @@ class ImageGenerator:
         width = 3 * single_width + 4 * offset + 40
         height = 3 * single_height + 8 * offset
 
+        bg_times_x = max(1, ceil(width / bg_img.size[0]))
+        bg_times_y = max(1, ceil(height / bg_img.size[1]))
+
         new_image = Image.new('RGB', (width, height), BOARD_GREEN)
+
+        for x in range(0, bg_times_x):
+            for y in range(0, bg_times_y):
+                new_image.paste(bg_img, (x * bg_img.size[0], bg_img.size[1] * y))
 
         img_positions = [
             (single_width + 2 * offset, 3 * offset),
