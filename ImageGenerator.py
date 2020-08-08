@@ -6,6 +6,7 @@ from wiezenlibrary.Team import Team, PLAYER_STRATS
 from wiezenlibrary.Slag import Slag
 from math import ceil
 import os
+import copy
 
 """ 
     CARDS NAMING SCHEME: cardType##.png 
@@ -41,10 +42,12 @@ class ImageGenerator:
             raise AttributeError("Slag cannot be None")
         new_layout: List[Tuple[Player, Card or None]] = list()
         not_played: List[Player] = list()
+        card_players=copy.copy(current_slag.card_player_tuple)
         for player in players:
-            for obj in current_slag.card_player_tuple:
-                if player == obj[0]:
+            for obj in card_players:
+                if player.identifier == obj[0].identifier:
                     new_layout.append(obj)
+                    card_players.remove(obj)
                     break
             else:
                 not_played.append(player)
