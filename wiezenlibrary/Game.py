@@ -321,7 +321,7 @@ class Game:
     async def check_allowed(self, player, card):
         # You can't lay a troef in the first slag unless when doing troel
         if self.current_slag.first:
-            if card.type == self.troef and self.first_troef_play==None:
+            if self.troef!=None and card.type == self.troef and self.first_troef_play==None:
                 await self.send_to([player], "mateke ge geen troef leggen in den eerste slag")
                 return False
             if self.first_troef_play!=None and self.first_troef_play==card:

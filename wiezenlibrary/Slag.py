@@ -22,13 +22,18 @@ class Slag:
                 highest = played
                 continue
             if played[1].type == self.troef:
-                if highest[1].type == self.troef:
-                    highest = played if played[1] > highest[1] else highest
-                else:
-                    highest = played
-            else:
+                highest = self.check_with_troef_card(highest, played)
+
+            elif played[1].type==self.type:
                 if highest[1].type == self.troef:
                     continue
                 else:
                     highest = played if played[1] > highest[1] else highest
+        return highest
+
+    def check_with_troef_card(self, highest, played):
+        if highest[1].type == self.troef:
+            highest = played if played[1] > highest[1] else highest
+        else:
+            highest = played
         return highest

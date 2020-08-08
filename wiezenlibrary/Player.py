@@ -17,7 +17,7 @@ class Player(ABC):
         self.round_wins: int = 0
         self.is_dealer: bool = is_dealer
         self.name: str = name
-        self.start_override=False
+        self.start_override=None
 
         self.last_played: Card or None = None
 
