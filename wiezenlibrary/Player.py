@@ -17,6 +17,7 @@ class Player(ABC):
         self.round_wins: int = 0
         self.is_dealer: bool = is_dealer
         self.name: str = name
+        self.start_override=False
 
         self.last_played: Card or None = None
 
@@ -31,6 +32,7 @@ class Player(ABC):
 
     @property
     def must_start(self):
+        if(self.start_override!=None):return self.start_override
         return self.has_card(Card(CardType.SCHOPPEN, 2))
 
     async def ask_shuffles(self):
