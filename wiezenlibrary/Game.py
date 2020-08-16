@@ -1,19 +1,23 @@
 import copy
-from pydoc import plain
+import enum
+import abc
+from typing import List, Dict
 
 from discord import File, Message
 
 from ImageGenerator import ImageGenerator
-from wiezenlibrary.Deck import Deck
-from typing import List, Dict, Tuple
-from wiezenlibrary.Player import Player
 from wiezenlibrary.Card import Card
-import enum
-
 from wiezenlibrary.Card import CardType
-from wiezenlibrary.Team import Team, PLAYER_STRATS
-
+from wiezenlibrary.Deck import Deck
+from wiezenlibrary.Player import Player
 from wiezenlibrary.Slag import Slag
+from wiezenlibrary.Team import Team
+from wiezenlibrary.strategies.AbstractStrategy import AbstractStrategy
+from wiezenlibrary.strategies.AskStrategy import AskStrategy
+from wiezenlibrary.strategies.DansenAloneStrategy import DansenAloneStrategy
+from wiezenlibrary.strategies.MiserieAloneStrategy import MiserieAloneStrategy
+from wiezenlibrary.strategies.SoloAloneStrategy import SoloAloneStrategy
+from wiezenlibrary.strategies.TroelAcesStrategy import TroelAcesStrategy
 
 
 class GameState(enum.Enum):
@@ -27,7 +31,7 @@ class GameState(enum.Enum):
 START_OPTIONS = ["Vraag", "Pas", "Dansen", "Solo", "Miserie"]
 
 
-class Game:
+class Game():
     def __init__(self, bot):
         self.card_deck = Deck()
         self.teams = list()
@@ -35,14 +39,13 @@ class Game:
         self.table: List[Card] = []
         self.troef = None
         self.current_slag: Slag or None = None
-        self.slag_count=0
+        self.slag_count = 0
         self.state = None
         self.turn = None
         self.answered = None
-        self.change_troef_player=None
-        self.first_troef_play=None
-        self.start_normal=True
-
+        self.change_troef_player = None
+        self.first_troef_play = None
+        self.start_normal = True
 
         self.bot = bot
 
@@ -71,7 +74,8 @@ class Game:
             await self.handle_question(player, action)
         elif self.state == GameState.PLAYING:
             await self.handle_gameplay_message(player, action)
-
+        elif self.state == GameState.END:
+            await self.handle_end_game_answer(player, action)
     ##### dealer mode function #####
     async def start_game(self):
         self.state = GameState.DEALING
@@ -80,12 +84,13 @@ class Game:
     async def handle_dealer_answer(self, action, player):
         if player.is_dealer:
             try:
-                if(int(action)>10000):
-                    await self.send_to([player], "das misschien wat te veel van het goede, pakt dat we met 1 keer beginnen")
-                    action="1"
+                if (int(action) > 10000):
+                    await self.send_to([player],
+                                       "das misschien wat te veel van het goede, pakt dat we met 1 keer beginnen")
+                    action = "1"
                 self.card_deck.shuffle(int(action))
             except Exception as e:
-                await self.send_to([player],"ok dat was grappig, maar nu moogt ge wel eens een geldig nummer geven.")
+                await self.send_to([player], "ok dat was grappig, maar nu moogt ge wel eens een geldig nummer geven.")
                 return
 
             await player.send_message("ge hebt %s keer geshoumeld" % action)
@@ -113,7 +118,7 @@ class Game:
             return
 
         if self.answered is not None:
-            if self.players[self.turn + len(self.answered)+1].identifier != player.identifier:
+            if self.players[self.turn + len(self.answered) + 1].identifier != player.identifier:
                 await self.send_to([player], "Elaba stopt eens met onze bot kapot te maken")
                 return
             if action == "nee":
@@ -148,22 +153,22 @@ class Game:
             else:
                 await self.send_to([player], "da verstaank nie")
                 return
-            await self.send_to(self.players,"vanaf nu is %s troef"%action)
+            await self.send_to(self.players, "vanaf nu is %s troef" % action)
             self.change_troef_player = None
             await self.start_rounds()
 
     async def handle_solo_answer(self, player):
         await self.send_to(self.players, "den %s gaat solo" % player.name)
-        self.make_team([player], PLAYER_STRATS.SOLOSOLO)
+        self.make_team([player], SoloAloneStrategy())
         await self.send_to([player], "welk wilt ge als troef? [harten,schoppen,koeken,klaveren]")
         self.reorder_players(self.players.index(player))
         self.set_start_override_false()
-        player.start_override=True
-        self.change_troef_player=player
+        player.start_override = True
+        self.change_troef_player = player
 
     async def handle_dansen_answer(self, player):
         await self.send_to(self.players, "den %s gaat een danske placeren en wilt 9 troeven halen" % player.name)
-        self.make_team([player], PLAYER_STRATS.DANSENALONE)
+        self.make_team([player], DansenAloneStrategy())
         await self.send_to([player], "welk wilt ge als troef? [harten,schoppen,koeken,klaveren]")
         self.reorder_players(self.players.index(player))
         self.set_start_override_false()
@@ -172,9 +177,9 @@ class Game:
 
     async def handle_miserie_answer(self, player):
         await self.send_to(self.players, "den %s heeft veel miserie" % player.name)
-        self.make_team([player], PLAYER_STRATS.MISERIEAlONE)
-        await self.send_to(self.players,"vanaf nu is er geen troef niet meer, sad!")
-        self.troef=None
+        self.make_team([player], MiserieAloneStrategy())
+        await self.send_to(self.players, "vanaf nu is er geen troef niet meer, sad!")
+        self.troef = None
         await self.start_rounds()
 
     async def handle_pas_answer(self, player):
@@ -184,7 +189,7 @@ class Game:
 
     async def handle_vraag_answer(self):
         self.answered = list()
-        await self.players[self.turn + len(self.answered)+1].send_message(
+        await self.players[self.turn + len(self.answered) + 1].send_message(
             "den %s vraagt, wilt ge mee? ja/nee" %
             self.players[self.turn].name)
 
@@ -192,7 +197,7 @@ class Game:
         await self.send_to(self.players,
                            "%s heeft een coalitie gemaakt met %s" %
                            (self.players[self.turn].name, player.name))
-        self.make_team([self.players[self.turn], player], PLAYER_STRATS.SAAI)
+        self.make_team([self.players[self.turn], player], AskStrategy())
         await self.start_rounds()
 
     async def handle_no_answer(self, player):
@@ -203,29 +208,29 @@ class Game:
             self.answered = None
             await self.send_card_question()
         else:
-            await self.players[self.turn + len(self.answered)+1].send_message(
+            await self.players[self.turn + len(self.answered) + 1].send_message(
                 "den %s vraagt, wilt ge mee? ja/nee" %
                 self.players[self.turn].name)
 
     async def check_troel(self):
         for player in self.players:
             if player.count_aces() == 3:
-                for idx,team_player in enumerate(self.players):
+                for idx, team_player in enumerate(self.players):
                     if team_player.count_aces() == 1:
                         self.troef = team_player.get_aces()[0].type
-                        self.first_troef_play=team_player.get_aces()[0]
+                        self.first_troef_play = team_player.get_aces()[0]
                         await self.send_to(self.players,
                                            "den %s heeft 3 azen dus hij moet samen met %s en den %s is troef nu" % (
                                                player.name, team_player.name, CardType.get_name(self.troef)))
-                        self.make_team([player, team_player], PLAYER_STRATS.TROELMETAZEN)
+                        self.make_team([player, team_player], TroelAcesStrategy())
                         self.set_start_override_false()
-                        team_player.start_override=True
+                        team_player.start_override = True
                         self.reorder_players(idx)
                         return True
             if player.count_aces() == 4:
                 heart_value = 13
                 while True:
-                    for idx,team_player in enumerate(self.players):
+                    for idx, team_player in enumerate(self.players):
                         if team_player.has_card(Card(CardType.HARTEN, heart_value)) and team_player is not player:
                             self.first_troef_play = Card(CardType.HARTEN, heart_value)
                             self.troef = player.get_aces()[3].type
@@ -234,7 +239,7 @@ class Game:
                                                    player.name,
                                                    team_player.name, CardType.get_name(self.troef)))
 
-                            self.make_team([player, team_player], PLAYER_STRATS.TROELMETAZEN)
+                            self.make_team([player, team_player], TroelAcesStrategy())
                             self.set_start_override_false()
                             self.reorder_players(idx)
                             return True
@@ -242,12 +247,12 @@ class Game:
         return False
 
     def set_start_override_false(self):
-        self.start_normal=False
+        self.start_normal = False
         for player in self.players:
             player.start_override = False
 
     def set_start_override_None(self):
-        self.start_normal=True
+        self.start_normal = True
         for player in self.players:
             player.start_override = None
 
@@ -262,7 +267,7 @@ class Game:
             else:
                 self.turn = 0
 
-    def make_team(self, team_players: list, strategy: PLAYER_STRATS):
+    def make_team(self, team_players: list, strategy: AbstractStrategy):
         """
         makes a team of the given team_players and places the other players in the other team
         :param team_players: players in list form
@@ -272,7 +277,7 @@ class Game:
         for toremove in team_players:
             leftover.remove(toremove)
 
-        self.teams = [Team(team_players, strategy), Team(leftover, PLAYER_STRATS.get_oposite(strategy))]
+        self.teams = [Team(team_players, strategy), Team(leftover, strategy.get_oposite())]
 
     def reorder_players(self, idx):
         """
@@ -294,7 +299,7 @@ class Game:
                 self.set_start_override_None()
                 self.turn = 0
                 await self.start_new_slag()
-                self.current_slag.first=True
+                self.current_slag.first = True
                 await self.send_tables()
                 await self.send_to(self.players, "den %s mag beginnen" % self.players[0].name)
                 await self.show_cards([self.players[0]])
@@ -321,12 +326,13 @@ class Game:
     async def check_allowed(self, player, card):
         # You can't lay a troef in the first slag unless when doing troel
         if self.current_slag.first:
-            if self.troef!=None and card.type == self.troef and self.first_troef_play==None:
+            if self.troef != None and card.type == self.troef and self.first_troef_play == None:
                 await self.send_to([player], "mateke ge geen troef leggen in den eerste slag")
                 return False
-            if self.first_troef_play!=None and self.first_troef_play==card:
-                await self.send_to([player], "mateke ge zijt troel gegaan, nu moet ge de kaart leggen waardoor ge troel zijt (aas of hoogste harten)")
-                self.current_slag.first=False
+            if self.first_troef_play != None and self.first_troef_play == card:
+                await self.send_to([player],
+                                   "mateke ge zijt troel gegaan, nu moet ge de kaart leggen waardoor ge troel zijt (aas of hoogste harten)")
+                self.current_slag.first = False
                 return False
 
         # First card in a slag that is being laid
@@ -348,7 +354,11 @@ class Game:
                                (winner[0].name, str(winner[1])))
             winner[0].round_wins += 1
             self.reorder_players(self.players.index(winner[0]))
-            if await self.check_team_wins(): return
+            if await self.check_team_wins():
+                await self.start_end_game()
+                self.turn=0
+                return
+
             await self.start_new_slag()
             await self.send_tables()
             self.turn = 0
@@ -364,13 +374,62 @@ class Game:
     async def check_team_wins(self):
         if self.teams[0].check_team_win(self.teams[1]):
             await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[0])))
-            self.reset()
+            self.teams[0].give_points()
             return True
         if self.teams[1].check_team_win(self.teams[0]):
             await self.send_to(self.players, "gohoho het team van %s is gewonnen" % (str(self.teams[1])))
-            self.reset()
+            self.teams[0].give_points()
             return True
         return False
+
+    ##### End game question + restart #####
+
+    async def start_end_game(self):
+        self.state=GameState.END
+        await self.print_current_scores()
+        self.answered=list()
+        await self.send_to(self.players,"doen we der nog eentje? [ja, nee]")
+
+    async def handle_end_game_answer(self, player, action):
+        if(action=='ja'):
+            await self.send_to(self.players,"nog ne keer? ok!")
+            self.cleanup_for_start()
+            await self.start_game()
+
+        elif(action=="nee"):
+            await self.send_to(self.players,"ok, dan stoppen we dermee")
+            await self.stop()
+
+    @abc.abstractmethod
+    async def stop(self):
+        pass
+
+    def cleanup_for_start(self):
+        self.card_deck = Deck()
+        self.teams = list()
+        self.table: List[Card] = []
+        self.troef = None
+        self.current_slag: Slag or None = None
+        self.slag_count = 0
+        self.state = None
+        self.turn = None
+        self.answered = None
+        self.change_troef_player = None
+        self.first_troef_play = None
+        self.start_normal = True
+
+    async def print_current_scores(self):
+        players=copy.copy(self.players)
+        players.sort(reverse=True,key=lambda player:player.total_points)
+        await self.send_to(self.players,"score bord")
+        place=1
+        prev_score=None
+        for player in players:
+            if(prev_score!=None and player.total_points!=prev_score):
+                place+=1
+            await self.send_to(self.players,"%s: %s met %s punten"%(place,player.name,player.total_points))
+            prev_score=player.total_points
+
 
     ##### UI and util functions #####
     async def send_tables(self):
@@ -385,7 +444,9 @@ class Game:
                 return player
         return None
 
-    def get_wiezen_speler(self, identifier: str):
+    def get_wiezen_speler(self, identifier: str,override=None):
+        if(override):
+            return self.players[override]
         for player in self.players:
             if player.identifier == identifier:
                 return player
@@ -424,6 +485,3 @@ class Game:
                 await msg.delete()
         await self.send_tables()
 
-    def reset(self):
-        self.state = GameState.DEALING
-        self.players.clear()

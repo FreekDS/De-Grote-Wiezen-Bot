@@ -52,8 +52,8 @@ class Card:
         return self.value == other.value and self.type == other.type
 
     def __lt__(self, other):
-        selfVal=self.value if self.value is not 1 else 14
-        otherval=other.value if other.value is not 1 else 14
+        selfVal = self.value if self.value is not 1 else 14
+        otherval = other.value if other.value is not 1 else 14
         return selfVal < otherval
 
     def __gt__(self, other):

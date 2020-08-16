@@ -2,8 +2,9 @@ from PIL import Image, ImageFont, ImageDraw
 from typing import List, Tuple
 from wiezenlibrary.Card import Card, CardType, Beilekes
 from wiezenlibrary.Player import Player
-from wiezenlibrary.Team import Team, PLAYER_STRATS
+from wiezenlibrary.Team import Team
 from wiezenlibrary.Slag import Slag
+from wiezenlibrary.strategies.AskStrategy import AskStrategy
 from math import ceil
 import os
 import copy
@@ -248,8 +249,8 @@ if __name__ == '__main__':
     slag.lay_card(players[0], Card(CardType.KLAVEREN, 10))
     slag.lay_card(players[1], Card(CardType.HARTEN, 5))
 
-    team1 = Team([players[0]], PLAYER_STRATS.SAAI)
-    team2 = Team([players[1], players[2], players[3]], PLAYER_STRATS.SAAI)
+    team1 = Team([players[0]], AskStrategy())
+    team2 = Team([players[1], players[2], players[3]], AskStrategy())
 
     gen.generate_table(slag, players, [team1, team2])
 

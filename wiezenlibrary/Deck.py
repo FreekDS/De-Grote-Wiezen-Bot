@@ -1,5 +1,6 @@
-from wiezenlibrary.Card import Card
 import random
+
+from wiezenlibrary.Card import Card
 
 
 class Deck:
@@ -11,7 +12,7 @@ class Deck:
         for i in range(0, times):
             random.shuffle(self.cards)
 
-    def     get_card(self):
+    def get_card(self):
         return self.cards.pop()
 
     def reset(self):

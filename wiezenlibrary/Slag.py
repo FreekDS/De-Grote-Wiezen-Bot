@@ -1,6 +1,7 @@
+from typing import List, Tuple
+
 from wiezenlibrary.Card import Card, CardType
 from wiezenlibrary.Player import Player
-from typing import List, Tuple
 
 
 class Slag:
@@ -24,7 +25,7 @@ class Slag:
             if played[1].type == self.troef:
                 highest = self.check_with_troef_card(highest, played)
 
-            elif played[1].type==self.type:
+            elif played[1].type == self.type:
                 if highest[1].type == self.troef:
                     continue
                 else:
