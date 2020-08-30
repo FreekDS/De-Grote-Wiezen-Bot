@@ -214,7 +214,7 @@ class ImageGenerator:
 
     def generate_table(self, current_slag: Slag, players: List[Player], teams: List[Team], offset=20):
         table_base = self._table_base(current_slag, players, teams, offset)
-        scores = self.game_score([0, 0], teams)
+        scores = self.game_score([teams[0].get_team_round_wins(), teams[1].get_team_round_wins()], teams)
 
         full_height = table_base.size[1] + scores.size[1]
         new_image = Image.new('RGBA', (table_base.size[0], full_height))
