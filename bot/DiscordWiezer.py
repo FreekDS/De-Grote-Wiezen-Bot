@@ -1,5 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from wiezenlibrary.Player import Player
-from discord import File
+
+_executor = ThreadPoolExecutor(10)
 
 
 class DiscordWiezer(Player):

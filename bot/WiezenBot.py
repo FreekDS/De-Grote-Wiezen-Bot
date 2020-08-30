@@ -1,9 +1,8 @@
 import discord
-from bot.DiscordWiezer import DiscordWiezer
-from discord import File
-from wiezenlibrary.Game import Game, GameState
-from DiscordWiezen import DiscordWiezen
 from discord.ext import commands
+
+from DiscordWiezen import DiscordWiezen
+from bot.DiscordWiezer import DiscordWiezer
 
 
 class WiezenBot(commands.Cog):
@@ -24,13 +23,13 @@ class WiezenBot(commands.Cog):
             return
         if msg == 'reset':
             self.game.reset()
-            await self.game.start_game()
+            self.game.start_game()
         temp= msg.content.split()
         test=len(msg.content.split())
         if not self.debug or not len(msg.content.split())>1:
-            await self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id)), msg.content)
+                self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id)), msg.content)
         else:
-            await self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id), int(msg.content.split()[1])), msg.content.split()[0])
+            self.game.perform_action(self.game.get_wiezen_speler(str(msg.author.id), int(msg.content.split()[1])), msg.content.split()[0])
 
     @commands.command(name='wiezen')
     async def wiezen(self, ctx, *spelers):
@@ -45,16 +44,16 @@ class WiezenBot(commands.Cog):
                 if user:
                     self.game.add_player(DiscordWiezer(user, False))
                     self.players.append(user)
-            await self.game.start_game()
+            self.game.start_game()
             if len(self.players) < 4:
                 ctx.send("Mateke, das hier ni koosjer en ni halal zenne, te weinig volk")
 
     @commands.command(name='wiezen_debug')
-    async def wiezen(self, ctx, *spelers):
+    async def wiezen_debug(self, ctx, *spelers):
         if len(spelers) != 3:
             await ctx.send("mateke ge moet wel me vier zijn hé")
         else:
-            self.debug=True
+            self.debug = True
             self.game = DiscordWiezen(self.bot, self)
             self.game.add_player(DiscordWiezer(ctx.author, True))
             self.players.append(ctx.author)
@@ -63,7 +62,7 @@ class WiezenBot(commands.Cog):
                 if user:
                     self.game.add_player(DiscordWiezer(user, False))
                     self.players.append(user)
-            await self.game.start_game()
+            self.game.start_game()
             if len(self.players) < 4:
                 ctx.send("Mateke, das hier ni koosjer en ni halal zenne, te weinig volk")
 

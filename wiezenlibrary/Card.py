@@ -49,6 +49,7 @@ class Card:
         return str(self)
 
     def __eq__(self, other):
+        if(other is None): return False
         return self.value == other.value and self.type == other.type
 
     def __lt__(self, other):

@@ -1,8 +1,11 @@
+import asyncio
 from abc import ABC
+from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List
 
 from wiezenlibrary.Card import Card, CardType
 
+_executor = ThreadPoolExecutor(10)
 
 class Player(ABC):
     def __init__(self, name: str, identifier: str, is_dealer: bool):
@@ -36,9 +39,14 @@ class Player(ABC):
         if (self.start_override != None): return self.start_override
         return self.has_card(Card(CardType.SCHOPPEN, 2))
 
-    async def ask_shuffles(self):
-        await self.send_message("gij zijt den dealer")
-        await self.send_message("hoeveel keer wilde shufflen?")
+    def ask_shuffles(self):
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(self.send_message("gij zijt den dealer"))
+            loop.run_until_complete(self.send_message("hoeveel keer wilde shufflen?"))
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     async def send_message(self, message, is_file=False):
         raise NotImplemented()

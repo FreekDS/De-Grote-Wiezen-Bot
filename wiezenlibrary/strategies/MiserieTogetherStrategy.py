@@ -13,4 +13,4 @@ class MiserieTogetherStrategy(AbstractStrategy):
         return 7
 
     def check_win(self, teams_wins: int, enemy_wins: int):
-        return teams_wins >= 1
+        return enemy_wins >= 1
