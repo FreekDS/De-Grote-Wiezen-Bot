@@ -31,9 +31,7 @@ class CliWiezen(Game):
             if img:
                 print("?")
             else:
-                asyncio.set_event_loop(asyncio.new_event_loop())
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(player.send_message(message))
+                player.send_message(message)
 
 
 if __name__ == '__main__':

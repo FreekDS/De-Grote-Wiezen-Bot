@@ -94,18 +94,13 @@ class Game():
             except Exception as e:
                 self.send_to([player], "ok dat was grappig, maar nu moogt ge wel eens een geldig nummer geven.")
                 return
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(player.send_message("ge hebt %s keer geshoumeld" % action))
+            player.send_message("ge hebt %s keer geshoumeld" % action)
 
             self.deal_cards()
             self.show_cards(self.players)
             self.start_questions()
         else:
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(
-                self.send_to((player), "mateke wacht eens op den dealer"))
+            self.send_to((player), "mateke wacht eens op den dealer")
 
     ##### start mode functions #####
     def start_questions(self):
@@ -117,10 +112,8 @@ class Game():
             self.send_card_question()
 
     def send_card_question(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.players[self.turn].send_message(
-            "wat wilde doen met uw kaarten: %s" % START_OPTIONS))
+        self.players[self.turn].send_message(
+            "wat wilde doen met uw kaarten: %s" % START_OPTIONS)
 
     def handle_question(self, player, action):
         if self.change_troef_player is not None:
@@ -189,7 +182,10 @@ class Game():
         self.send_to(self.players, "den %s heeft veel miserie" % player.name)
         self.make_team([player], MiserieAloneStrategy())
         self.send_to(self.players, "vanaf nu is er geen troef niet meer, sad!")
+        self.reorder_players(self.players.index(player))
         self.troef = None
+        self.set_start_override_false()
+        player.start_override = True
         self.start_rounds()
 
     def handle_pas_answer(self, player):
@@ -199,11 +195,9 @@ class Game():
 
     def handle_vraag_answer(self):
         self.answered = list()
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.players[(self.turn + len(self.answered) + 1)%4].send_message(
+        self.players[(self.turn + len(self.answered) + 1)%4].send_message(
             "den %s vraagt, wilt ge mee? ja/nee" %
-            self.players[self.turn].name))
+            self.players[self.turn].name)
 
     def handle_Yes_answer(self, player):
         self.send_to(self.players,
@@ -220,12 +214,9 @@ class Game():
             self.answered = None
             self.send_card_question()
         else:
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self.players[(self.turn + len(self.answered) + 1)%4].send_message(
+            self.players[(self.turn + len(self.answered) + 1)%4].send_message(
                     "den %s vraagt, wilt ge mee? ja/nee" %
                     self.players[self.turn].name)
-                )
 
     def check_troel(self):
         for player in self.players:

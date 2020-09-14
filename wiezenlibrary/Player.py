@@ -40,15 +40,10 @@ class Player(ABC):
         return self.has_card(Card(CardType.SCHOPPEN, 2))
 
     def ask_shuffles(self):
-        loop = asyncio.get_event_loop()
-        try:
-            loop.run_until_complete(self.send_message("gij zijt den dealer"))
-            loop.run_until_complete(self.send_message("hoeveel keer wilde shufflen?"))
-        finally:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+        self.send_message("gij zijt den dealer")
+        self.send_message("hoeveel keer wilde shufflen?")
 
-    async def send_message(self, message, is_file=False):
+    def send_message(self, message, is_file=False):
         raise NotImplemented()
 
     def get_card(self, index):

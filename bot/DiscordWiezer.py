@@ -1,9 +1,8 @@
+from wiezenlibrary.Player import Player
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from wiezenlibrary.Player import Player
-
-_executor = ThreadPoolExecutor(10)
-
+executor = ThreadPoolExecutor(10)
 
 class DiscordWiezer(Player):
     """
@@ -14,8 +13,11 @@ class DiscordWiezer(Player):
         super(DiscordWiezer, self).__init__(discord_member.name, str(discord_member.id), is_dealer)
         self.discord_member = discord_member
 
-    async def send_message(self, message, is_file=False):
+    def send_message(self, message, is_file=False):
+        # print("adding message")
+        # self.messages.append((message,is_file))
+        loop = asyncio.get_event_loop()
         if is_file:
-            return await self.discord_member.send(file=message)
+            asyncio.run_coroutine_threadsafe(self.discord_member.send(file=message), loop)
         else:
-            return await self.discord_member.send(message)
+            asyncio.run_coroutine_threadsafe(self.discord_member.send(message), loop)

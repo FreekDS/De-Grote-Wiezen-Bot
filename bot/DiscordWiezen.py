@@ -19,13 +19,13 @@ class DiscordWiezen(Game):
         self.stop_notifier.stop(self)
 
     def update_table_images(self):
-        msg: Message
-        for msg in self.table_messages.values():
-            if msg:
-                # loop = asyncio.get_event_loop()
-                asyncio.ensure_future(
-                    msg.delete()
-                )
+        # msg: Message
+        # for msg in self.table_messages.values():
+        #     if msg:
+        #         # loop = asyncio.get_event_loop()
+        #         asyncio.ensure_future(
+        #             msg.delete()
+        #         )
         self.send_tables()
 
     def show_cards(self, players: list):
@@ -34,28 +34,19 @@ class DiscordWiezen(Game):
             img_gen.hand_to_image(player)
             img_file = File(img_gen.get_output('hand').strip())
             # loop = asyncio.get_event_loop()
-            asyncio.ensure_future(
-                player.send_message("Hier zijn uwer kaarten")
-            )
-            asyncio.ensure_future(
-                player.send_message(img_file, is_file=True))
+            player.send_message("Hier zijn uwer kaarten")
+            player.send_message(img_file, is_file=True)
 
     def send_to(self, players: list, message: str or File, img=False):
         for player in players:
             if img:
                 file = File(message)
-                # loop = asyncio.get_event_loop()
-                asyncio.ensure_future(
-                    self.sendMsg(file, player)
-                )
+                self.sendMsg(file, player)
             else:
-                # loop = asyncio.get_event_loop()
-                asyncio.ensure_future(
-                    player.send_message(message)
-                )
+                player.send_message(message)
 
-    async def sendMsg(self, file, player):
-        msg = await player.send_message(file, is_file=True)
+    def sendMsg(self, file, player):
+        msg = player.send_message(file, is_file=True)
         self.table_messages[player] = msg
 
     def send_tables(self):
